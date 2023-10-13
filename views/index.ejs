@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Live Chat</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body class="h-100">
+
+
+
+    <div class="container container-md mt-2" style="max-width: 500px;">
+        <div class="card">
+            <div class="card-header text-center">
+                <h3>Live Chat</h3>
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p>Online Users: <span id="connected-users">
+                                <%= connectedUsers %>
+                            </span></p>
+                    </div>
+                    <div hidden>
+                        <p>Users Id: <span id="user-id">
+                                <%= userCount %>
+                            </span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" id="card-body-id" style="max-height: 400px; overflow-y: auto;min-height: 400px;">
+                <ul class="list-group" id="messages"></ul>
+            </div>
+            <div class="card-footer">
+                <form id="form" action="">
+                    <div class="input-group">
+                        <input type="text" id="message-input" class="form-control" autocomplete="off">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary">Send</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        .list-group-item.me {
+            text-align: right;
+            background-color: #d4edda;
+        }
+
+        .list-group-item.other-user {
+            text-align: left;
+            background-color: #f8f9fa;
+        }
+
+        .timestamp {
+            font-size: 0.5rem;
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+
+        $(function () {
+
+            var socket = io();
+            const input = document.getElementById('message-input');
+            const messages = document.getElementById('messages');
+            const connectedUsersElement = document.getElementById('connected-users');
+            const currentNo = 0;
+
+            $('#form').submit(function () {
+                socket.emit('message', {
+                    user: 'bbxmbb',
+                    content: input.value,
+                    no: $.trim($('#user-id').html()),
+                    date: new Date()
+                });
+                input.value = '';
+                return false;
+            });
+            socket.on('message', function (data) {
+                console.log('Received message from ' + data.user + ': ' + data.content);
+                if (data.no == $.trim($('#user-id').html())) {
+                    $('#messages').append(
+                        $('<li>').addClass('list-group-item me')
+                            .append($('<div>').addClass('userContent').text(data.content))
+                            .append($('<div>').addClass('timestamp').text(new Date(data.date).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'medium', hour12: false })))
+
+                    );
+                } else {
+                    $('#messages').append(
+                        $('<li>').addClass('list-group-item other-user')
+                            .append($('<div>').addClass('userContent').text(data.content))
+                            .append($('<div>').addClass('timestamp').text(new Date(data.date).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'medium', hour12: false })))
+
+                    );
+                }
+                $('#card-body-id').scrollTop($('#messages')[0].scrollHeight);
+            });
+            socket.on('user connected', function (data) {
+                connectedUsersElement.innerText = data.connectedUsers;
+            });
+        });
+    </script>
+</body>
+
+</html>
