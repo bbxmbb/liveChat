@@ -6,14 +6,18 @@ const ejs = require('ejs');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+const path = require('path');
+
+const pool = require('./config/database'); // database.js
 
 // Serve static files (if needed)
 // app.use(express.static(__dirname + '/public'));
 
-app.set('view engine', 'ejs'); // Set EJS as the template engine
 
-let connectedUsers = 0; // Variable to keep track of connected users
-let userCount = 0; // Variable to assign unique IDs to users
+app.set('view engine', 'ejs'); // Set EJS as the template engine
+// Set the views directory (if it's not in the default location)
+app.set('views', path.join(__dirname, 'src/views'));
+
 
 // Define routes (if needed)
 app.get('/', (req, res) => {
@@ -24,6 +28,25 @@ app.get('/', (req, res) => {
     }); // Render the index.ejs file
 
 });
+app.get('/items', async (req, res) => {
+    try {
+        const [rows, fields] = await pool.execute('SELECT * FROM items'); // Use pool.execute() for queries
+        // res.json(rows);
+        console.log("somebody access this page");
+        res.render('items', {
+            data: rows
+        });
+    } catch (error) {
+        console.error('Error executing MySQL query:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+
+
+
+let connectedUsers = 0; // Variable to keep track of connected users
+let userCount = 0; // Variable to assign unique IDs to users
 
 // Socket.io logic
 io.on('connection', (socket) => {
